@@ -1,0 +1,8 @@
+# python env
+ll_env/
+.venv/
+.conda
+
+# python cache
+__pycache__/
+
