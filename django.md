@@ -17,6 +17,13 @@ ll_project文件夹用于存放项目文件。其中最重要的是 settings.py�
 ⽂件wsgi.py 帮助 Django 提供它创建的⽂件，名称是 web server gateway interface
 （Web 服务器⽹关接⼝）的⾸字⺟缩写。
 
+### 1.1. 修改语言时区
+
+在ll_project/settings.py文件中修改语言和时区：
+
+    LANGUAGE_CODE = 'zh-hans'
+    TIME_ZONE = 'Asia/Shanghai'
+
 ## 2. 运行项目
 
 在当前文件夹下运行项目：
@@ -97,26 +104,3 @@ ll_project文件夹用于存放项目文件。其中最重要的是 settings.py�
     admin.site.register(Topic)
 
 现在可通过<http://localhost:8000/admin/>访问管理网站
-
-
-
-
-
-## 创建模型
-
-在ll_app/models.py文件中定义模型：
-
-    from django.db import models
-
-    class Book(models.Model):
-        title = models.CharField(max_length=100)
-        author = models.CharField(max_length=100)
-        published_date = models.DateField()
-
-## 运行迁移
-
-在当前文件夹下运行迁移：
-
-    python manage.py makemigrations
-
-    python manage.py migrate
