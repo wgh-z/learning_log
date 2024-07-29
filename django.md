@@ -104,3 +104,60 @@ ll_project文件夹用于存放项目文件。其中最重要的是 settings.py�
     admin.site.register(Topic)
 
 现在可通过<http://localhost:8000/admin/>访问管理网站
+
+## 6. 创建网页
+
+数据库专家专注于模型，程序员专注于视图代码，⽽前端专家专注于模板
+
+view视图：flask route装饰的函数，定义数据处理的过程
+url：定义url和视图的映射关系
+templates模板：html，渲染网页，定义数据展示的过程
+model模型：定义数据存储的过程
+
+### 6.1. 定义URL
+
+在learning_logs/urls.py文件中定义URL：
+
+    """定义 learning_logs 的 URL 模式"""
+
+    from django.urls import path
+    from . import views
+
+
+    # 将应用的url定义在应用内，而不是在项目的urls.py中，方便管理
+    app_name = 'learning_logs'
+    urlpatterns = [
+        # 主⻚
+        path('', views.index, name='index'),
+    ]
+
+### 6.2. 定义view视图
+
+在learning_logs/views.py文件中定义视图：
+
+    """定义url下数据的处理过程"""
+
+    from django.shortcuts import render
+
+
+    def index(request):
+        """学习笔记的主页。"""
+        return render(request, 'learning_logs/index.html')
+
+### 6.3. 创建templates模板
+
+在learning_logs/templates/learning_logs文件夹中创建index.html文件：
+
+    <p>学习笔记</p>
+
+### 6.4 映射url
+
+在ll_project/urls.py文件中映射url：
+
+    from django.contrib import admin
+    from django.urls import path, include
+
+    urlpatterns = [
+        path('admin/', admin.site.urls),
+        path('', include('learning_logs.urls')),
+    ]
