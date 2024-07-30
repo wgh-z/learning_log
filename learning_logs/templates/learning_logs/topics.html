@@ -4,7 +4,11 @@
 <p>主题</p>
 <ul>
     {% for topic in topics %}
-    <li>{{ topic.text }}</li>
+    <li>
+        <a href="{% url 'learning_logs:topic' topic.id %}">
+        {{ topic.text }}
+        </a>
+    </li>
     {% empty %}
     <li>尚未添加主题</li>
     {% endfor %}

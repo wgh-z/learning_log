@@ -13,4 +13,7 @@ urlpatterns = [
     # 显⽰所有主题的⻚⾯
     # 新url模式为topics/，匹配topics/和topics，但topic/后不能再接其他内容
     path('topics/', views.topics, name='topics'),
+
+    # 特定主题的详细⻚⾯
+    path('topics/<int:topic_id>/', views.topic, name='topic'),
 ]
