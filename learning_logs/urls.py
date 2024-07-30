@@ -9,4 +9,8 @@ app_name = 'learning_logs'
 urlpatterns = [
     # 主⻚
     path('', views.index, name='index'),
+
+    # 显⽰所有主题的⻚⾯
+    # 新url模式为topics/，匹配topics/和topics，但topic/后不能再接其他内容
+    path('topics/', views.topics, name='topics'),
 ]

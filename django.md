@@ -204,13 +204,48 @@ html语言中由于标签较多，缩进层级较多，一般使用2个空格缩
 - **`{% extends %}`** 表示继承的父模板名，能够导入父模板中的所有内容。
 - **`{% block content %} ... {% endblock content %}`** 表示替换父模板中名为content的块。
 
+### 7.3. 模板中访问数据
 
+在learning_logs/views.py文件中修改视图：
 
+    def index(request):
+        """学习笔记的主页。"""
+        topics = Topic.objects.order_by('date_added')
+        context = {'topics': topics}
+        return render(request, 'learning_logs/index.html', context)
 
+- **`Topic.objects.order_by('date_added')`** 查询数据库，按date_added字段排序，返回Topic对象列表。
+- **`context = {'topics': topics}`** 表示将topics对象列表赋值给context字典的topics键。
+- **`return render(request, 'learning_logs/index.html', context)`** 表示将context字典传递给index.html模板。
 
+在learning_logs/templates/learning_logs/topics.html文件中定义模板：
 
+    {% extends 'learning_logs/base.html' %}
 
+    {% block content %}
+    <p>主题</p>
+    <ul>
+        {% for topic in topics %}
+        <li>{{ topic.text }}</li>
+        {% empty %}
+        <li>尚未添加主题</li>
+        {% endfor %}
+    </ul>
+    {% endblock content %}
 
+这里使用
+
+    {% for item in list %}
+    do something with each item
+    {% endfor %}
+
+语法来遍历列表中的每个元素。
+
+- **`{{ variable }}`**表示变量。
+- **`{% for topic in topics %}`** 表示遍历context中的topics列表中的每个元素。
+- **`{{ topic.text }}`** 表示输出topic对象的text属性。属性在models.py中的Topic类定义。
+- **`{% empty %}`** 表示如果topics列表为空，则执行该块中的内容。
+- **`{% endfor %}`** 表示结束for循环。
 
 ## 8. 静态文件
 
