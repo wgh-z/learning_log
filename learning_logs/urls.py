@@ -18,5 +18,8 @@ urlpatterns = [
     path('topics/<int:topic_id>/', views.topic, name='topic'),
 
     # ⽤于添加新主题的⽹⻚
-     path('new_topic/', views.new_topic, name='new_topic'),
+    path('new_topic/', views.new_topic, name='new_topic'),
+
+    # ⽤于添加新条⽬的⻚⾯
+    path('new_entry/<int:topic_id>/', views.new_entry, name='new_entry'),
 ]

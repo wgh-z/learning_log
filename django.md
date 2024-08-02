@@ -374,7 +374,70 @@ html语言中由于标签较多，缩进层级较多，一般使用2个空格缩
     <a href="{% url 'learning_logs:new_topic' %}">添加一个新主题</a>
     {% endblock content %}
 
+#### 8.3.2. 新条目页面
 
+在learning_logs/forms.py文件中创建表单：
+
+    class EntryForm(forms.ModelForm):
+        class Meta:
+            model = Entry
+            fields = ['text']
+            labels = {'text': ''}
+            widgets = {'text': forms.Textarea(attrs={'cols': 80})}
+
+- **`widgets = {'text': forms.Textarea(attrs={'cols': 80})}`** 一种表单元素，表示将text字段渲染为文本域，并设置文本域的宽度为80个字符。
+
+在learning_logs/urls.py文件中添加：
+
+    # ⽤于添加新条⽬的⻚⾯
+    path('new_entry/<int:topic_id>/', views.new_entry, name='new_entry'),
+
+在learning_logs/view.py文件中添加：
+
+    def new_entry(request, topic_id): # 添加新条目
+        """在特定主题中添加新条⽬"""
+        topic = Topic.objects.get(id=topic_id)
+
+        if request.method != 'POST':
+            # 刚进入new_entry网页，未提交数据：创建⼀个空表单
+            form = EntryForm()
+        else:
+            # POST 提交的数据：对数据进⾏处理
+            form = EntryForm(data=request.POST)
+            if form.is_valid():
+                # 创建⼀个新的条⽬对象，并将其赋给 new_entry，但不保存到数据库中
+                new_entry = form.save(commit=False)  # commit=False表示暂时不写入数据库
+                new_entry.topic = topic
+                new_entry.save()
+                return redirect('learning_logs:topic', topic_id=topic_id)
+
+        context = {'topic': topic, 'form': form}
+        return render(request, 'learning_logs/new_entry.html', context)
+
+在learning_logs/templates/learning_logs/new_entry.html文件中显示表单：
+
+    {% extends "learning_logs/base.html" %}
+
+    {% block content %}
+    <p>
+        <a href="{% url 'learning_logs:topic' topic.id %}">{{ topic }}</a>
+    </p>
+    <p>添加一个新条目:</p>
+        <form action="{% url 'learning_logs:new_entry' topic.id %}" method='post'>
+        {% csrf_token %}
+        {{ form.as_div }}
+        <button name='submit'>添加条目</button>
+    </form>
+    {% endblock content %}
+
+这里的`topic`是由view.py中的`context`字典传递过来
+第一条指向topic的url用于返回topic页面
+
+在learning_logs/templates/learning_logs/topic.html文件条目字段后添加链接：
+
+    <p>
+        <a href="{% url 'learning_logs:new_entry' topic.id %}">添加新条目</a>
+    </p>
 
 
 

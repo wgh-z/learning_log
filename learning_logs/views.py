@@ -2,7 +2,7 @@
 
 from django.shortcuts import render, redirect
 from .models import Topic
-from .forms import TopicForm
+from .forms import TopicForm, EntryForm
 
 
 def index(request):
@@ -37,3 +37,23 @@ def new_topic(request):
     # 显⽰空表单或指出表单数据⽆效
     context = {'form': form}
     return render(request, 'learning_logs/new_topic.html', context)  # 进入new_topic网页
+
+def new_entry(request, topic_id): # 添加新条目
+    """在特定主题中添加新条⽬"""
+    topic = Topic.objects.get(id=topic_id)
+
+    if request.method != 'POST':
+        # 刚进入new_entry网页，未提交数据：创建⼀个空表单
+        form = EntryForm()
+    else:
+        # POST 提交的数据：对数据进⾏处理
+        form = EntryForm(data=request.POST)
+        if form.is_valid():
+            # 创建⼀个新的条⽬对象，并将其赋给 new_entry，但不保存到数据库中
+            new_entry = form.save(commit=False)  # commit=False表示暂时不写入数据库
+            new_entry.topic = topic
+            new_entry.save()
+            return redirect('learning_logs:topic', topic_id=topic_id)
+
+    context = {'topic': topic, 'form': form}
+    return render(request, 'learning_logs/new_entry.html', context)
