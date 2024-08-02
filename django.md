@@ -114,7 +114,7 @@ url：定义url和视图的映射关系
 templates模板：html，渲染网页，定义数据展示的过程
 model模型：定义数据存储的过程
 
-### 6.1. 定义URL
+### 6.1. 定义URL模式
 
 在learning_logs/urls.py文件中定义URL：
 
@@ -206,7 +206,9 @@ html语言中由于标签较多，缩进层级较多，一般使用2个空格缩
 - **`{% extends %}`** 表示继承的父模板名，能够导入父模板中的所有内容。
 - **`{% block content %} ... {% endblock content %}`** 表示替换父模板中名为content的块。
 
-### 7.3. 模板中访问数据
+## 8. 数据传递
+
+### 8.1. 模板中访问数据
 
 在learning_logs/views.py文件中修改视图：
 
@@ -249,7 +251,7 @@ html语言中由于标签较多，缩进层级较多，一般使用2个空格缩
 - **`{% empty %}`** 表示如果topics列表为空，则执行该块中的内容。
 - **`{% endfor %}`** 表示结束for循环。
 
-### 7.4. 向url传递数据
+### 8.2. 向url传递数据
 
 在learning_logs/urls.py文件中定义url：
 
@@ -301,6 +303,85 @@ html语言中由于标签较多，缩进层级较多，一般使用2个空格缩
 - **`{% url 'learning_logs:topic' topic.id %}`** 表示使用learning_logs命名空间中名为topic的url模式，并将topic.id作为实参。这里既可以用位置参数，也可以使用关键字参数:
 `{% url 'learning_logs:topic' topic_id=topic.id %}`
 
+### 8.3. 使用表单
+
+表单是HTML页面中的一种元素，用于向服务器提交数据。在Django中，可以使用表单类来创建表单，并使用模板来显示表单。
+
+#### 8.3.1. 新主题页面
+
+在learning_logs/forms.py文件中创建表单：
+
+    from django import forms
+    from .models import Topic, Entry
+
+    class TopicForm(forms.ModelForm):
+        class Meta:
+            model = Topic
+            fields = ['text']
+            labels = {'text': ''}
+
+- **`model = Topic`** 表示将使用Topic模型创建表单，表单将符合模型要求。
+- **`fields = ['text']`** 表示该表单将包含text字段。
+- **`labels = {'text': ''}`** 表示该表单将不显示text字段的标签。
+
+在learning_logs/view.py文件中添加：
+
+    def new_topic(request):
+        """添加新主题"""
+        if request.method != 'POST':
+            # 刚进入new_topic网页，未提交数据：创建⼀个空表单
+            form = TopicForm()
+        else:
+            # POST 提交的数据：对数据进⾏处理
+            form = TopicForm(data=request.POST)
+            if form.is_valid():  # 数据检查，表单有效
+                form.save()  # 写入数据库
+                return redirect('learning_logs:topics')  # 保存好⽤户提交的数据后，重定向到⽹⻚topics
+
+        # 显⽰空表单或指出表单数据⽆效
+        context = {'form': form}
+        return render(request, 'learning_logs/new_topic.html', context)  # 进入new_topic网页
+
+**GET请求**：从服务器读取数据
+**POST请求**：向服务器提交数据
+在⽤户初次请求该⽹⻚时，浏览器将发送 GET 请求，此时不使用数据创建表单，即空表单，供用户填写；
+在⽤户填写并提交表单时，浏览器将发送 POST 请求，此时数据被赋给request.POST。
+
+⽅法`is_valid()`核实⽤户填写了所有必不可少的字段（表单字段默认都是必不可少的），⽽且输⼊的数据与要求的字段类型⼀致（例如，字段`text`少于200个字符，这是在models.py中指定的）
+当⽤户提交的表单数据⽆效时，将显⽰⼀些默认的错误消息
+
+在learning_logs/templates/learning_logs/new_topic.html文件中显示表单：
+
+    {% extends "learning_logs/base.html" %}
+
+    {% block content %}
+    <p>添加一个新主题:</p>
+    <form action="{% url 'learning_logs:new_topic' %}" method='post'>
+        {% csrf_token %}
+        {{ form.as_div }}
+        <button name="submit">添加主题</button>
+    </form>
+    {% endblock content %}
+
+- **`<form></form>`** 定义一个html表单，action表示数据发送的目标url，这里将发送到视图new_topic，method表示数据发送的方式，这里使用POST。
+
+- **`{% csrf_token %}`** 表示添加一个跨站请求伪造（Cross-Site Request Forgery，简称CSRF）令牌，以防止恶意用户提交表单。
+- **`as_div`** 让 Django 将所有表单元素都渲染为 HTM`<div></div>` 元素，这是区块标签，是⼀种整洁地显⽰表单的简单⽅式。
+
+在learning_logs/templates/learning_logs/topics.html文件中添加链接：
+
+    --snip--
+    <a href="{% url 'learning_logs:new_topic' %}">添加一个新主题</a>
+    {% endblock content %}
+
+
+
+
+
+
+
+## 9. 用户账户和数据
+
 ## 8. 静态文件
 
 静态文件：css、js、图片等
@@ -327,36 +408,4 @@ html语言中由于标签较多，缩进层级较多，一般使用2个空格缩
 在learning_logs/templates/learning_logs/index.html文件中引用静态文件：
 
     <link rel="stylesheet" href="{% static 'learning_logs/style.css' %}">
-
-## 9. 创建其他网页
-
-### 9.1. 定义URL
-
-在learning_logs/urls.py文件中定义URL：
-
-    """定义 learning_logs 的 URL 模式"""
-
-    from django.urls import path
-    from . import views
-
-
-    # 将应用的url定义在应用内，而不是在项目的urls.py中，方便管理
-    app_name = 'learning_logs'
-    urlpatterns = [
-        # 主⻚
-        path('', views.index, name='index'),
-        path('topics/', views.topics, name='topics'),
-    ]
-
-### 9.2. 定义view视图
-
-在learning_logs/views.py文件中定义视图：
-
-    """定义url下数据的处理过程"""
-
-    from django.shortcuts import render
-
-
-    def topics(request):
-        """学习笔记的主页。"""
-        return render(request, 'learning_logs/topics.html')
+`

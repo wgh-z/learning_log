@@ -16,4 +16,7 @@ urlpatterns = [
 
     # 特定主题的详细⻚⾯
     path('topics/<int:topic_id>/', views.topic, name='topic'),
+
+    # ⽤于添加新主题的⽹⻚
+     path('new_topic/', views.new_topic, name='new_topic'),
 ]
