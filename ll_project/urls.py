@@ -20,6 +20,7 @@ from django.urls import path, include
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path('accounts/', include('accounts.urls')),
 
     # 从learning_logs的urls.py导入URL模式
     path('', include('learning_logs.urls')),

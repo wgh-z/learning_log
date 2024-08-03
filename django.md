@@ -67,7 +67,7 @@ ll_project文件夹用于存放项目文件。其中最重要的是 settings.py�
             """返回模型的字符串表示，即模型的名称。"""
             return self.text
 
-### 4.2. 激活模型
+### 4.2. 注册应用
 
 在ll_project/settings.py文件中添加应用：
 
@@ -150,7 +150,7 @@ model模型：定义数据存储的过程
 
     <p>学习笔记</p>
 
-### 6.4 映射url
+### 6.4 映射应用url
 
 在ll_project/urls.py文件中映射url：
 
@@ -488,30 +488,75 @@ html语言中由于标签较多，缩进层级较多，一般使用2个空格缩
 
 ## 9. 用户账户和数据
 
-## 8. 静态文件
+这里创建一个新应用用于管理用户账户，与之前一样分为3步：
 
-静态文件：css、js、图片等
+1. 创建应用
 
-### 8.1. 创建静态文件夹
+        python manage.py startapp accounts
 
-在learning_logs/static/learning_logs文件夹中创建index.html文件：
+2. 注册应用
 
-    <p>学习笔记</p>
+    在ll_project/settings.py文件的INSTALLED_APPS中添加：
 
-### 8.2. 映射静态文件
+        'accounts',
 
-在ll_project/settings.py文件中映射静态文件：
+3. 映射应用url
 
-    STATIC_URL = '/static/'
+    在ll_project/urls.py文件的urlpatterns中添加：
 
-    # 添加静态文件夹
-    STATICFILES_DIRS = [
-        os.path.join(BASE_DIR, 'static'),
+        path('accounts/', include('accounts.urls')),
+
+### 9.1. 登录页面
+
+在accounts/urls.py文件中添加：
+
+    """为应用程序 accounts 定义 URL 模式"""
+
+    from django.urls import path, include
+
+
+    app_name = 'accounts'
+    urlpatterns = [
+        # 使用 Django 内置的登录视图
+        path('', include('django.contrib.auth.urls')),
     ]
 
-### 8.3. 引用静态文件
+这里的url路由是/accounts/login/，其中accounts是app_name。而login则让它将请求发送给Django的默认视图login。
 
-在learning_logs/templates/learning_logs/index.html文件中引用静态文件：
+在ll_project/settings.py的TEMPLATES中修改（django5.0.7）：
 
-    <link rel="stylesheet" href="{% static 'learning_logs/style.css' %}">
-`
+        "DIRS": [os.path.join(BASE_DIR, "accounts/templates")],
+
+这里指定了应用模板查找位置在accounts/templates目录下
+所以会自动在accounts/templates/registration/login.html文件中查找：
+
+    {% extends 'learning_logs/base.html' %}
+
+    {% block content %}
+    {% if form.errors %}
+        <p>您的用户名或密码不正确。请重试！</p>
+    {% endif %}
+    <form action="{% url 'accounts:login' %}" method='post'>
+        {% csrf_token %}
+        {{ form.as_div }}
+        <button name="submit">登录</button>
+    </form>
+    {% endblock content %}
+
+由于使用了内置登录视图，需要手动添加登录后重定向的页面，
+在ll_project/settings.py的末尾添加：
+
+    # 我的设置
+    LOGIN_REDIRECT_URL = 'learning_logs:index'  # 登录后重定向的页面
+
+在base.html中添加登录链接：
+
+    <a href="{% url 'learning_logs:topics' %}">Topics</a> -
+    {% if user.is_authenticated %}
+        你好, {{ user.username }}.
+    {% else %}
+        <a href="{% url 'accounts:login' %}">登录</a>
+    {% endif %}
+
+在 Django 的身份验证系统中，每个模板都可以使用对象 user。这个对象有一个 is_authenticated 属性：
+如果用户已登录，该属性为True，否则为 False
