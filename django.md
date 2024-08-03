@@ -439,9 +439,52 @@ html语言中由于标签较多，缩进层级较多，一般使用2个空格缩
         <a href="{% url 'learning_logs:new_entry' topic.id %}">添加新条目</a>
     </p>
 
+#### 8.3.3. 编辑条目页面
 
+在learning_logs/urls.py文件中添加：
 
+    # 编辑条⽬的⻚⾯
+    path('edit_entry/<int:entry_id>/', views.edit_entry, name='edit_entry'),
 
+在learning_logs/view.py文件中添加：
+
+    def edit_entry(request, entry_id):
+        """编辑既有条⽬"""
+        entry = Entry.objects.get(id=entry_id)
+        topic = entry.topic
+
+        if request.method != 'POST':
+            # 初始请求：创建一个表单，使⽤当前条⽬填充，用户将看到既有的数据，并且能够进行编辑
+            form = EntryForm(instance=entry)
+        else:
+            # POST 提交的数据：根据 request.POST 中的相关数据对其进行修改
+            form = EntryForm(instance=entry, data=request.POST)
+            if form.is_valid():
+                form.save()
+                return redirect('learning_logs:topic', topic_id=topic.id)
+
+        context = {'entry': entry, 'topic': topic, 'form': form}
+        return render(request, 'learning_logs/edit_entry.html', context)
+
+在learning_logs/templates/learning_logs/edit_entry.html文件中显示表单：
+
+    {% extends "learning_logs/base.html" %}
+
+    {% block content %}
+    <p><a href="{% url 'learning_logs:topic' topic.id %}">{{ topic.text }}</a></p>
+    <p>编辑条目:</p>
+    <form action="{% url 'learning_logs:edit_entry' entry.id %}" method='post'>
+        {% csrf_token %}
+        {{ form.as_div }}
+        <button name='submit'>保存更改</button>
+    </form>
+    {% endblock content %}
+
+在learning_logs/templates/learning_logs/topic.html文件的每个条目后添加链接：
+
+    <p>
+        <a href="{% url 'learning_logs:edit_entry' entry.id %}">编辑条目</a>
+    </p>
 
 ## 9. 用户账户和数据
 

@@ -22,4 +22,7 @@ urlpatterns = [
 
     # ⽤于添加新条⽬的⻚⾯
     path('new_entry/<int:topic_id>/', views.new_entry, name='new_entry'),
+    
+    # 编辑条⽬的⻚⾯
+    path('edit_entry/<int:entry_id>/', views.edit_entry, name='edit_entry'),
 ]

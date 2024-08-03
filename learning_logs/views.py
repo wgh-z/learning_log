@@ -1,7 +1,7 @@
 """定义url下数据的处理过程"""
 
 from django.shortcuts import render, redirect
-from .models import Topic
+from .models import Topic, Entry
 from .forms import TopicForm, EntryForm
 
 
@@ -57,3 +57,21 @@ def new_entry(request, topic_id): # 添加新条目
 
     context = {'topic': topic, 'form': form}
     return render(request, 'learning_logs/new_entry.html', context)
+
+def edit_entry(request, entry_id):
+        """编辑既有条⽬"""
+        entry = Entry.objects.get(id=entry_id)
+        topic = entry.topic
+
+        if request.method != 'POST':
+            # 初始请求：创建一个表单，使⽤当前条⽬填充，用户将看到既有的数据，并且能够进行编辑
+            form = EntryForm(instance=entry)
+        else:
+            # POST 提交的数据：根据 request.POST 中的相关数据对其进行修改
+            form = EntryForm(instance=entry, data=request.POST)
+            if form.is_valid():
+                form.save()
+                return redirect('learning_logs:topic', topic_id=topic.id)
+
+        context = {'entry': entry, 'topic': topic, 'form': form}
+        return render(request, 'learning_logs/edit_entry.html', context)
