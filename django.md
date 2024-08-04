@@ -466,6 +466,8 @@ html语言中由于标签较多，缩进层级较多，一般使用2个空格缩
         context = {'entry': entry, 'topic': topic, 'form': form}
         return render(request, 'learning_logs/edit_entry.html', context)
 
+这里的post请求中必须包含instance=entry，而不能仅是form = EntryForm(data=request.POST)
+
 在learning_logs/templates/learning_logs/edit_entry.html文件中显示表单：
 
     {% extends "learning_logs/base.html" %}
@@ -560,3 +562,78 @@ html语言中由于标签较多，缩进层级较多，一般使用2个空格缩
 
 在 Django 的身份验证系统中，每个模板都可以使用对象 user。这个对象有一个 is_authenticated 属性：
 如果用户已登录，该属性为True，否则为 False
+
+### 9.2. 注销页面
+
+在base.html末尾添加注销链接：
+
+    {% if user.is_authenticated %}
+        <hr />
+        <form action="{% url 'accounts:logout' %}" method='post'>
+            {% csrf_token %}
+            <button name='submit'>退出登录</button>
+        </form>
+    {% endif %}
+
+内置的默认注销 URL 模式为 'accounts/logout'。然而，注销请求必须以 POST 请求的方式发送，
+否则攻击者将能够轻松地发送注销请求。
+为了让注销请求使用 POST 方法，我们定义一个仅包含`{% csrf_token %}`的空表单。
+`<hr />` 表示使用水平线将页面分隔成两个部分。
+
+在ll_project/settings.py末尾添加：
+
+    LOGOUT_REDIRECT_URL = 'learning_logs:index'  # 注销后重定向的页面
+
+### 9.3. 注册页面
+
+在accounts/urls.py文件中添加：
+
+    # 注册⻚⾯
+    path('register/', views.register, name='register'),
+
+在accounts/views.py文件中添加：
+
+    """定义accounts应用的数据处理过程"""
+
+    from django.shortcuts import render, redirect
+    from django.contrib.auth import login
+    from django.contrib.auth.forms import UserCreationForm
+
+
+    def register(request):
+        """注册新用户"""
+        if request.method != 'POST':
+            # 显示空的注册表单
+            form = UserCreationForm()
+        else:
+            # 处理填写好的表单
+            form = UserCreationForm(data=request.POST)
+            if form.is_valid():
+                new_user = form.save()
+                # 让用户自动登录，再重定向到主页
+                login(request, new_user)
+                return redirect('learning_logs:index')
+
+        # 显示空表单或指出表单无效
+        context = {'form': form}
+        return render(request, 'registration/register.html', context)  # 渲染注册页面
+
+这里使用了内置的UserCreationForm表单和内置登录方法。
+
+在accounts/templates/registration/register.html文件中添加：
+
+    {% extends "learning_logs/base.html" %}
+
+    {% block content %}
+        <form action="{% url 'accounts:register' %}" method='post'>
+            {% csrf_token %}
+            {{ form.as_div }}
+            <button name="submit">注册</button>
+        </form>
+    {% endblock content %}
+
+同样的，这里的form是通过context字典传递过来的，使用的是内置的UserCreationForm表单。
+
+最后，在base.html的登录前添加注册链接：
+
+    <a href="{% url 'accounts:register' %}">注册</a> -
