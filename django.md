@@ -637,3 +637,93 @@ html语言中由于标签较多，缩进层级较多，一般使用2个空格缩
 最后，在base.html的登录前添加注册链接：
 
     <a href="{% url 'accounts:register' %}">注册</a> -
+
+### 9.4. 限制未登录访问
+
+django使用@login_required装饰器限制用户对某些页面的访问。
+限制访问页面比不限制更安全，而且限制可以轻易修改为不限制，因此首先考虑哪些页面不需要被限制，然后限制剩下的所有页面。
+这里除了主页和注册页面，其他页面都应该需要登录才能访问。
+
+在learning_logs/views.py 除了index的所有视图函数前添加：
+
+    from django.contrib.auth.decorators import login_required
+
+    @login_required
+
+`login_required()`的代码检查用户是否已登录。仅当用户已登录时，Django 才运行 topics() 的代码。
+如果用户未登录，将请求ll_project/settings.py中LOGIN_URL指向的页面。
+这里需要重定向到登录页面，因此在ll_project/settings.py末尾添加：
+
+    LOGIN_URL = 'accounts:login'  # 未登录时重定向的页面
+
+### 9.5. 关联用户数据
+
+只需将最高层的数据关联到用户，低层的数据也将自动关联到该用户。
+在项目“学习笔记”中，最高层数据是主题，所有条目都与特定的主题相关联。
+只要每个主题都归属于特定的用户，就能确定数据库中每个条目的所有者。
+
+在learning_logs/models.py中添加：
+
+    from django.contrib.auth.models import User
+
+        owner = models.ForeignKey(User, on_delete=models.CASCADE)
+
+这里将owner与模型user建立外键关系。
+on_delete=models.CASCADE表示级联删除，当用户被删除时，所有与之相关联的主题也会被删除。
+
+由于修改了数据库，需要应用数据库迁移
+
+    python manage.py makemigrations learning_logs
+
+这里选择将数据都关联到管理员账户，因此选用户id1，再执行迁移：
+
+    python manage.py migrate
+
+或者选择重置数据库，这会根据现有model构建全新的空数据库，需要重新创建管理员账户:
+
+    python manage.py flush
+
+此时如果用户尝试提交新主题，Topic model的owner字段并没有值，
+需要在learning_logs/view.py的中new_topic修改添加：
+
+    new_topic = form.save(commit=False)
+    new_topic.owner = request.user  # 指定owner字段
+    new_topic.save()
+
+### 9.6. 限制非所有者访问
+
+接下来只显示已登录用户自己的主题，将learning_logs/views.py中的查询数据库改为：
+
+    topics = Topic.objects.filter(owner=request.user).order_by('date_added')  # 只显示用户自己的主题
+
+用户登录后，request 对象将有一个 request.user 属性集，其中包含有关该用户的信息。
+这里使用.filter()只查询owner属性为当前用户的topic对象。
+
+接下来限制登陆后直接通过topic的url进行访问，即 `http://127.0.0.1:8000/topics/1/`。
+在learning_logs/views.py的topic将不属于当前用户的请求返回404：
+
+    from django.http import Http404
+
+    # 确认请求的主题属于当前用户
+    if topic.owner != request.user:
+        raise Http404
+
+引发 Http404 异常， Django 将返回一个 404 错误页面（此时为debug模式，为调试页面）。
+
+同样的，对于edit_entry页面，防止直接通过如`http://127.0.0.1:8000/edit_entry/1/`方式访问，
+在learning_logs/views.py的edit_entry中返回404：
+
+    if topic.owner != request.user:
+        raise Http404
+
+接下来保护new_entry页面，防止直接通过如`http://127.0.0.1:8000/new_entry/1/`方式访问：
+在learning_logs/views.py的new_entry中返回404：
+
+    if topic.owner != request.user:
+        raise Http404
+
+可以将所有的核实身份代码放在函数中：
+
+    def check_topic_owner(topic: Topic, request):
+        if topic.owner != request.user:
+            raise Http404

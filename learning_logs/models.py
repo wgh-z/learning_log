@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 
 
 class Topic(models.Model):
@@ -10,6 +11,8 @@ class Topic(models.Model):
     # 使用datetimefield记录日期和时间，
     # auto_now_add=True表示在对象创建时自动添加当前日期和时间
     date_added = models.DateTimeField(auto_now_add=True)
+    
+    owner = models.ForeignKey(User, on_delete=models.CASCADE)
 
     # print实例时自动调用这个方法
     def __str__(self):

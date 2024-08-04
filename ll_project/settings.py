@@ -132,3 +132,4 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # 我的设置
 LOGIN_REDIRECT_URL = 'learning_logs:index'  # 登录后重定向的页面
 LOGOUT_REDIRECT_URL = 'learning_logs:index'  # 退出后重定向的页面
+LOGIN_URL = 'accounts:login'  # 未登录时重定向的页面
