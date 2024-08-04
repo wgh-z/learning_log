@@ -32,4 +32,7 @@ class Entry(models.Model):
 
     def __str__(self):
         """返回⼀个表⽰条⽬的简单字符串"""
-        return f"{self.text[:50]}..."
+        if len(self.text) > 50:
+            return f"{self.text[:50]}..."
+        else:
+            return self.text

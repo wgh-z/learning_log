@@ -6,3 +6,6 @@ ll_env/
 # python cache
 __pycache__/
 
+# database  防止部署时测试数据覆盖实际数据
+*.db
+*.sqlite3
